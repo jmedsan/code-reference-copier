@@ -88,6 +88,24 @@ The test suite includes:
 3. Select the generated .vsix file
 4. Reload VS Code when prompted
 
+## Publishing
+
+### Setup (one-time)
+1. Create account at https://marketplace.visualstudio.com/
+2. Create publisher/organization at https://marketplace.visualstudio.com/manage/publishers
+3. Generate Personal Access Token at https://dev.azure.com/ (User settings → Personal access tokens, Marketplace scope)
+4. Authenticate: `npx vsce login <publisher-name>`
+
+### Publish Release
+Publish with version increment:
+```bash
+npx vsce publish patch    # Bug fixes: 1.0.0 → 1.0.1
+npx vsce publish minor    # New features: 1.0.0 → 1.1.0
+npx vsce publish major    # Breaking changes: 1.0.0 → 2.0.0
+```
+
+This updates the version and publishes in one command. The extension will appear on the Marketplace within minutes.
+
 ## Project Structure
 
 ```
