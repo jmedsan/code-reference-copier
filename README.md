@@ -7,10 +7,13 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
 - Copy current file reference: `/absolute/path/to/file.js`
 - Copy file reference with single line: `/absolute/path/to/file.js:15`
 - Copy file reference with line range: `/absolute/path/to/file.js:10-25`
+- Copy code reference with selected text attached
 - **Auto-paste to terminal applications** (Linux only)
 - Works with any file type in VS Code
 - Uses absolute paths with OS-appropriate separators
-- Keyboard shortcut: `Ctrl+Alt+K` (Linux/Windows) / `Cmd+Alt+K` (Mac)
+- Keyboard shortcuts:
+  - `Ctrl+Alt+K` (Linux/Windows) / `Cmd+Alt+K` (Mac) - Copy reference only
+  - `Ctrl+Alt+T` (Linux/Windows) / `Cmd+Alt+T` (Mac) - Copy reference with text
 
 ## Usage
 
@@ -18,9 +21,10 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
 
 1. Open any file in VS Code
 2. Optionally select text (single or multiple lines)
-3. Use keyboard shortcut `Ctrl+Alt+K` / `Cmd+Alt+K` OR
-4. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run "Copy Code Reference"
-5. Reference is copied to clipboard or auto-pasted to terminal
+3. Use one of these commands:
+   - **Copy reference only**: `Ctrl+Alt+K` / `Cmd+Alt+K` OR Command Palette → "Copy Code Reference"
+   - **Copy reference with text**: `Ctrl+Alt+T` / `Cmd+Alt+T` OR Command Palette → "Copy Code Reference with Text"
+4. Reference is copied to clipboard or auto-pasted to terminal
 
 ### Auto-Paste Configuration (Linux Only)
 
@@ -47,7 +51,7 @@ Customize the output format using template variables:
 2. Search for "Code Reference Copier"
 3. Configure template options
 
-**Available settings:**
+**Base reference settings:**
 
 - `codeReferenceCopier.templatePath` - Format for file without selection
   - Default: `{PATH} `
@@ -61,12 +65,20 @@ Customize the output format using template variables:
   - Default: `{PATH}:{LINE1}-{LINE2} `
   - Variables: `{PATH}`, `{LINE1}`, `{LINE2}`
 
+**Text-append settings:**
+
+- `codeReferenceCopier.templateWithText` - Appended when using "Copy with Text" command
+  - Default: `\n\n{TEXT}\n\n`
+  - Variables: `{TEXT}`
+  - This template is **appended** to the base reference format (not a replacement)
+
 **Example custom configuration:**
 ```json
 {
   "codeReferenceCopier.templatePath": "{PATH}",
   "codeReferenceCopier.templateSingleLine": "{PATH}@{LINE1}",
-  "codeReferenceCopier.templateMultiLine": "{PATH}#{LINE1}:{LINE2}"
+  "codeReferenceCopier.templateMultiLine": "{PATH}#{LINE1}:{LINE2}",
+  "codeReferenceCopier.templateWithText": "\n```\n{TEXT}\n```\n"
 }
 ```
 
@@ -87,7 +99,15 @@ Customize the output format using template variables:
 /home/user/project/src/main.js:10-25
 ```
 
-*Note: All references include a trailing space for immediate typing convenience.*
+**With selected text appended (default template):**
+```
+/home/user/project/src/main.js:15
+
+const value = calculate();
+
+```
+
+*Note: References include a trailing space by default for immediate typing convenience.*
 
 ## Platform Support
 
