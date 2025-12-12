@@ -78,7 +78,7 @@ Customize the output format using template variables:
   "codeReferenceCopier.templatePath": "{PATH}",
   "codeReferenceCopier.templateSingleLine": "{PATH}@{LINE1}",
   "codeReferenceCopier.templateMultiLine": "{PATH}#{LINE1}:{LINE2}",
-  "codeReferenceCopier.templateWithText": "\n```\n{TEXT}\n```\n"
+  "codeReferenceCopier.templateWithText": "\n\n{TEXT}\n\n"
 }
 ```
 
