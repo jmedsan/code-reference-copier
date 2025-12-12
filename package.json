@@ -1,0 +1,81 @@
+{
+  "name": "code-reference-copier",
+  "displayName": "Code Reference Copier",
+  "description": "Copy file references with line ranges in standard CLI format. Auto-paste to terminal applications on Linux.",
+  "version": "1.0.0",
+  "publisher": "jmedsan",
+  "keywords": [
+    "code",
+    "reference",
+    "copy",
+    "clipboard",
+    "line",
+    "range",
+    "file",
+    "path",
+    "terminal",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jmedsan/code-reference-copier"
+  },
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:code-reference-copier.copyReference"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-reference-copier.copyReference",
+        "title": "Copy Code Reference"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "code-reference-copier.copyReference",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Code Reference Copier",
+      "properties": {
+        "codeReferenceCopier.autoPasteApplications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "List of terminal applications to auto-paste code references to (Linux only). Examples: ['kiro-cli', 'copilot']"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "test": "npm run compile && node ./out/test/runTest.js 2>/dev/null"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.60.0",
+    "@vscode/test-electron": "^2.3.4",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.4",
+    "vsce": "^2.15.0"
+  }
+}
