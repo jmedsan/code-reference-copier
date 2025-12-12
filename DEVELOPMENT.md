@@ -56,6 +56,31 @@ sudo dnf install libX11-devel libxkbfile-devel cairo-devel gtk3
 npm test
 ```
 
+### Test Coverage
+
+Generate coverage report:
+
+```bash
+npx c8 --reporter=text --reporter=html npm test
+```
+
+**Important**: Clean up coverage artifacts after running:
+```bash
+rm -rf coverage/
+```
+
+**Coverage goals**:
+- Overall: >85%
+- Function coverage: 100% (all functions tested)
+- configurationManager.ts: 100%
+- terminalDetector.ts: 100%
+- Core modules (extension.ts, processDetector.ts): >80%
+
+The test suite includes:
+- Property-based testing (100 random iterations)
+- Integration tests for copyReference() and formatReference()
+- Edge cases (Unicode, empty paths, large numbers)
+
 ## Manual Installation
 
 1. Build the .vsix file (see above)
