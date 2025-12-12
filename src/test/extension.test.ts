@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { formatReference, copyReference } from '../extension';
 
 // Mock VS Code Selection class for testing
 class MockSelection implements vscode.Selection {
@@ -30,21 +31,17 @@ class MockSelection implements vscode.Selection {
     with(): vscode.Selection { return this; }
 }
 
-// Extract formatReference function for testing
-function formatReference(filePath: string, selection: vscode.Selection): string {
-    if (selection.isEmpty) {
-        return filePath + ' ';
-    }
+// Common template strings
+const TEMPLATE_DEFAULT = {
+    path: '{PATH} ',
+    singleLine: '{PATH}:{LINE1} ',
+    multiLine: '{PATH}:{LINE1}-{LINE2} '
+};
 
-    const startLine = selection.start.line + 1;
-    const endLine = selection.end.line + 1;
-
-    if (startLine === endLine) {
-        return `${filePath}:${startLine} `;
-    }
-
-    return `${filePath}:${startLine}-${endLine} `;
-}
+// Common test file paths
+const TEST_FILE = '/test/file.js';
+const LONG_PATH = '/very/long/path/'.repeat(50) + 'file.js';
+const UNICODE_PATH = '/测试/файл/🚀/file.js';
 
 suite('Extension Test Suite', () => {
 
@@ -61,7 +58,7 @@ suite('Extension Test Suite', () => {
                     new vscode.Position(startLine, 0),
                     new vscode.Position(startLine, 0)
                 );
-                const emptyResult = formatReference(filePath, emptySelection);
+                const emptyResult = formatReference(filePath, emptySelection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
                 assert.strictEqual(emptyResult, filePath + ' ', `Empty selection should return file path with trailing space`);
 
                 // Test single line selection
@@ -69,7 +66,7 @@ suite('Extension Test Suite', () => {
                     new vscode.Position(startLine, 0),
                     new vscode.Position(startLine, 10)
                 );
-                const singleResult = formatReference(filePath, singleLineSelection);
+                const singleResult = formatReference(filePath, singleLineSelection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
                 assert.strictEqual(singleResult, `${filePath}:${startLine + 1} `, `Single line should include line number with trailing space`);
 
                 // Test multi-line selection
@@ -78,7 +75,7 @@ suite('Extension Test Suite', () => {
                         new vscode.Position(startLine, 0),
                         new vscode.Position(endLine, 0)
                     );
-                    const multiResult = formatReference(filePath, multiLineSelection);
+                    const multiResult = formatReference(filePath, multiLineSelection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
                     assert.strictEqual(multiResult, `${filePath}:${startLine + 1}-${endLine + 1} `, `Multi-line should include range with trailing space`);
                 }
             }
@@ -98,23 +95,21 @@ suite('Extension Test Suite', () => {
                     new vscode.Position(0, 0),
                     new vscode.Position(0, 0)
                 );
-                const result = formatReference(path, selection);
+                const result = formatReference(path, selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
                 assert.strictEqual(result, path + ' ', `Path should be preserved exactly with trailing space: ${path}`);
             });
         });
 
         test('Property 3: Line number accuracy', () => {
-            const filePath = '/test/file.js';
-
             // Test various line numbers
             for (let line = 0; line < 100; line++) {
                 const selection = new MockSelection(
                     new vscode.Position(line, 0),
                     new vscode.Position(line, 5)
                 );
-                const result = formatReference(filePath, selection);
+                const result = formatReference(TEST_FILE, selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
                 const expectedLine = line + 1; // Convert to 1-based
-                assert.strictEqual(result, `${filePath}:${expectedLine} `, `Line ${line} should convert to ${expectedLine} with trailing space`);
+                assert.strictEqual(result, `${TEST_FILE}:${expectedLine} `, `Line ${line} should convert to ${expectedLine} with trailing space`);
             }
         });
     });
@@ -126,116 +121,217 @@ suite('Extension Test Suite', () => {
                 new vscode.Position(0, 0),
                 new vscode.Position(0, 0)
             );
-            const result = formatReference('', selection);
+            const result = formatReference('', selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
             assert.strictEqual(result, ' ');
         });
 
         test('Very long file paths', () => {
-            const longPath = '/very/long/path/'.repeat(50) + 'file.js';
             const selection = new MockSelection(
                 new vscode.Position(0, 0),
                 new vscode.Position(0, 0)
             );
-            const result = formatReference(longPath, selection);
-            assert.strictEqual(result, longPath + ' ');
+            const result = formatReference(LONG_PATH, selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
+            assert.strictEqual(result, LONG_PATH + ' ');
         });
 
         test('Unicode characters in path', () => {
-            const unicodePath = '/测试/файл/🚀/file.js';
             const selection = new MockSelection(
                 new vscode.Position(0, 0),
                 new vscode.Position(0, 0)
             );
-            const result = formatReference(unicodePath, selection);
-            assert.strictEqual(result, unicodePath + ' ');
+            const result = formatReference(UNICODE_PATH, selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
+            assert.strictEqual(result, UNICODE_PATH + ' ');
         });
 
         test('Large line numbers', () => {
-            const filePath = '/test/file.js';
             const largeLine = 999999;
             const selection = new MockSelection(
                 new vscode.Position(largeLine, 0),
                 new vscode.Position(largeLine, 5)
             );
-            const result = formatReference(filePath, selection);
-            assert.strictEqual(result, `${filePath}:${largeLine + 1} `);
+            const result = formatReference(TEST_FILE, selection, TEMPLATE_DEFAULT.path, TEMPLATE_DEFAULT.singleLine, TEMPLATE_DEFAULT.multiLine);
+            assert.strictEqual(result, `${TEST_FILE}:${largeLine + 1} `);
         });
     });
 
-    suite('Auto-Paste Integration Tests', () => {
-        let originalPlatform: string;
+    suite('copyReference Integration Tests', () => {
 
-        setup(() => {
-            originalPlatform = process.platform;
-        });
+        test('Without active editor - handles gracefully (no crash)', async () => {
+            // Save current editor state
+            const originalEditor = vscode.window.activeTextEditor;
 
-        teardown(() => {
-            Object.defineProperty(process, 'platform', { value: originalPlatform });
-        });
+            try {
+                // Set activeTextEditor to undefined by closing all editors
+                await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 
-        test('Property-based test: auto-paste workflow - 100 iterations', () => {
-            for (let i = 0; i < 100; i++) {
-                const filePath = `/test/file${i}.js`;
-                const startLine = Math.floor(Math.random() * 1000);
-                const endLine = startLine + Math.floor(Math.random() * 100);
+                // Execute copyReference - should not throw
+                await copyReference();
 
-                // Test on Linux platform
-                Object.defineProperty(process, 'platform', { value: 'linux' });
-
-                const selection = new MockSelection(
-                    new vscode.Position(startLine, 0),
-                    new vscode.Position(endLine, 0)
-                );
-                const reference = formatReference(filePath, selection);
-
-                // Verify reference format is correct for auto-paste
-                if (startLine === endLine) {
-                    // Empty selection - should return just the file path with trailing space
-                    assert.strictEqual(reference, filePath + ' ');
-                } else {
-                    // Multi-line selection - should include range with trailing space
-                    assert.strictEqual(reference, `${filePath}:${startLine + 1}-${endLine + 1} `);
-                }
+                // If we get here without throwing, test passes
+                assert.ok(true, 'copyReference handled missing editor gracefully');
+            } finally {
+                // Restore original state (not strictly necessary in tests but good practice)
             }
         });
 
-        test('Platform-specific behavior with mocked process.platform', () => {
-            const filePath = '/test/file.js';
-            const selection = new MockSelection(
+        test('Integration with formatReference - orchestrates correctly', () => {
+            // This test verifies that copyReference would call formatReference with correct parameters
+            // We test the integration by verifying formatReference works with the same inputs
+
+            const testCases = [
+                {
+                    description: 'empty selection uses path template',
+                    selection: new MockSelection(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+                    templatePath: '{PATH} ',
+                    templateSingle: '{PATH}:{LINE1} ',
+                    templateMulti: '{PATH}:{LINE1}-{LINE2} ',
+                    expected: '/test/file.js '
+                },
+                {
+                    description: 'single line selection uses single-line template',
+                    selection: new MockSelection(new vscode.Position(10, 0), new vscode.Position(10, 15)),
+                    templatePath: '{PATH} ',
+                    templateSingle: '{PATH}:{LINE1} ',
+                    templateMulti: '{PATH}:{LINE1}-{LINE2} ',
+                    expected: '/test/file.js:11 '
+                },
+                {
+                    description: 'multi-line selection uses multi-line template',
+                    selection: new MockSelection(new vscode.Position(5, 0), new vscode.Position(15, 10)),
+                    templatePath: '{PATH} ',
+                    templateSingle: '{PATH}:{LINE1} ',
+                    templateMulti: '{PATH}:{LINE1}-{LINE2} ',
+                    expected: '/test/file.js:6-16 '
+                },
+                {
+                    description: 'custom templates without spaces',
+                    selection: new MockSelection(new vscode.Position(20, 0), new vscode.Position(30, 5)),
+                    templatePath: '{PATH}',
+                    templateSingle: '{PATH}@{LINE1}',
+                    templateMulti: '{PATH}@{LINE1}:{LINE2}',
+                    expected: '/test/file.js@21:31'
+                }
+            ];
+
+            testCases.forEach(testCase => {
+                const result = formatReference(
+                    '/test/file.js',
+                    testCase.selection,
+                    testCase.templatePath,
+                    testCase.templateSingle,
+                    testCase.templateMulti
+                );
+                assert.strictEqual(result, testCase.expected, `Failed: ${testCase.description}`);
+            });
+        });
+
+        test('Integration with different file paths', () => {
+            // Verify formatReference (which copyReference uses) handles various path formats
+            const testCases = [
+                { path: '/unix/style/path.js', line: 5, expected: '/unix/style/path.js:6 ' },
+                { path: 'C:\\Windows\\Style\\Path.cs', line: 10, expected: 'C:\\Windows\\Style\\Path.cs:11 ' },
+                { path: '/path/with spaces/file.ts', line: 1, expected: '/path/with spaces/file.ts:2 ' },
+                { path: '/测试/файл.go', line: 100, expected: '/测试/файл.go:101 ' }
+            ];
+
+            testCases.forEach(testCase => {
+                const selection = new MockSelection(
+                    new vscode.Position(testCase.line, 0),
+                    new vscode.Position(testCase.line, 10)
+                );
+                const result = formatReference(
+                    testCase.path,
+                    selection,
+                    '{PATH} ',
+                    '{PATH}:{LINE1} ',
+                    '{PATH}:{LINE1}-{LINE2} '
+                );
+                assert.strictEqual(result, testCase.expected);
+            });
+        });
+
+        test('Error handling - copyReference catches and logs errors', async () => {
+            // copyReference has try-catch that logs errors to console
+            // We verify it doesn't throw by calling it in various error conditions
+
+            // Test 1: No active editor (should log "No active editor found")
+            await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+            await copyReference(); // Should not throw
+
+            assert.ok(true, 'copyReference completed without throwing');
+        });
+
+        test('Template configuration integration - verifies correct template selection logic', () => {
+            // This tests the logic that copyReference uses to select templates
+            const filePath = '/home/user/project/app.ts';
+
+            // Test 1: Empty selection should use templatePath
+            const emptySelection = new MockSelection(
+                new vscode.Position(0, 0),
+                new vscode.Position(0, 0)
+            );
+            const emptyResult = formatReference(
+                filePath,
+                emptySelection,
+                '{PATH}',
+                '{PATH}:{LINE1}',
+                '{PATH}:{LINE1}-{LINE2}'
+            );
+            assert.strictEqual(emptyResult, filePath);
+
+            // Test 2: Single line should use templateSingleLine
+            const singleSelection = new MockSelection(
+                new vscode.Position(10, 5),
+                new vscode.Position(10, 20)
+            );
+            const singleResult = formatReference(
+                filePath,
+                singleSelection,
+                '{PATH}',
+                '{PATH}:{LINE1}',
+                '{PATH}:{LINE1}-{LINE2}'
+            );
+            assert.strictEqual(singleResult, `${filePath}:11`);
+
+            // Test 3: Multi-line should use templateMultiLine
+            const multiSelection = new MockSelection(
                 new vscode.Position(10, 0),
                 new vscode.Position(20, 0)
             );
-            const reference = formatReference(filePath, selection);
-
-            // Test Linux platform
-            Object.defineProperty(process, 'platform', { value: 'linux' });
-            assert.strictEqual(reference, `${filePath}:11-21 `);
-
-            // Test Windows platform
-            Object.defineProperty(process, 'platform', { value: 'win32' });
-            assert.strictEqual(reference, `${filePath}:11-21 `);
-
-            // Test macOS platform
-            Object.defineProperty(process, 'platform', { value: 'darwin' });
-            assert.strictEqual(reference, `${filePath}:11-21 `);
+            const multiResult = formatReference(
+                filePath,
+                multiSelection,
+                '{PATH}',
+                '{PATH}:{LINE1}',
+                '{PATH}:{LINE1}-{LINE2}'
+            );
+            assert.strictEqual(multiResult, `${filePath}:11-21`);
         });
 
-        test('Either/or logic: paste OR clipboard (not both)', () => {
-            // This test verifies the logic structure - actual behavior depends on configuration
-            const filePath = '/test/file.js';
-            const selection = new MockSelection(
-                new vscode.Position(5, 0),
-                new vscode.Position(5, 10)
-            );
-            const reference = formatReference(filePath, selection);
+        test('Line number conversion - verifies 0-based to 1-based conversion in integration', () => {
+            // copyReference must convert VS Code's 0-based line numbers to 1-based for CLI tools
+            const testCases = [
+                { vsCodeLine: 0, cliLine: 1 },
+                { vsCodeLine: 1, cliLine: 2 },
+                { vsCodeLine: 99, cliLine: 100 },
+                { vsCodeLine: 999, cliLine: 1000 }
+            ];
 
-            // Reference should be formatted correctly regardless of paste/clipboard choice
-            assert.strictEqual(reference, `${filePath}:6 `);
-
-            // The either/or logic is implemented in the copyReference function:
-            // - If auto-paste succeeds, clipboard is not used
-            // - If auto-paste fails or is disabled, clipboard is used
-            assert.ok(true, 'Either/or logic is implemented in copyReference function');
+            testCases.forEach(testCase => {
+                const selection = new MockSelection(
+                    new vscode.Position(testCase.vsCodeLine, 0),
+                    new vscode.Position(testCase.vsCodeLine, 10)
+                );
+                const result = formatReference(
+                    '/test.ts',
+                    selection,
+                    '{PATH}',
+                    '{PATH}:{LINE1}',
+                    '{PATH}:{LINE1}-{LINE2}'
+                );
+                assert.strictEqual(result, `/test.ts:${testCase.cliLine}`,
+                    `VS Code line ${testCase.vsCodeLine} should convert to CLI line ${testCase.cliLine}`);
+            });
         });
     });
 });

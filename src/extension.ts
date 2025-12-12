@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
-async function copyReference() {
+export async function copyReference() {
     try {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -25,7 +25,12 @@ async function copyReference() {
 
         const filePath = editor.document.uri.fsPath;
         const selection = editor.selection;
-        const reference = formatReference(filePath, selection);
+
+        const templatePath = configManager.getTemplatePath();
+        const templateSingleLine = configManager.getTemplateSingleLine();
+        const templateMultiLine = configManager.getTemplateMultiLine();
+
+        const reference = formatReference(filePath, selection, templatePath, templateSingleLine, templateMultiLine);
 
         const pasted = await tryAutoPaste(reference);
         if (!pasted) {
@@ -51,17 +56,28 @@ async function tryAutoPaste(reference: string): Promise<boolean> {
     return false;
 }
 
-function formatReference(filePath: string, selection: vscode.Selection): string {
+export function formatReference(
+    filePath: string,
+    selection: vscode.Selection,
+    templatePath: string,
+    templateSingleLine: string,
+    templateMultiLine: string
+): string {
     if (selection.isEmpty) {
-        return filePath + ' ';
+        return templatePath.replace('{PATH}', filePath);
     }
 
     const startLine = selection.start.line + 1;
     const endLine = selection.end.line + 1;
 
     if (startLine === endLine) {
-        return `${filePath}:${startLine} `;
+        return templateSingleLine
+            .replace('{PATH}', filePath)
+            .replace('{LINE1}', startLine.toString());
     }
 
-    return `${filePath}:${startLine}-${endLine} `;
+    return templateMultiLine
+        .replace('{PATH}', filePath)
+        .replace('{LINE1}', startLine.toString())
+        .replace('{LINE2}', endLine.toString());
 }

@@ -57,6 +57,21 @@
           },
           "default": [],
           "description": "List of terminal applications to auto-paste code references to (Linux only). Examples: ['kiro-cli', 'copilot']"
+        },
+        "codeReferenceCopier.templatePath": {
+          "type": "string",
+          "default": "{PATH} ",
+          "description": "Template for file reference without line selection. Variables: {PATH}"
+        },
+        "codeReferenceCopier.templateSingleLine": {
+          "type": "string",
+          "default": "{PATH}:{LINE1} ",
+          "description": "Template for single-line selection. Variables: {PATH}, {LINE1}"
+        },
+        "codeReferenceCopier.templateMultiLine": {
+          "type": "string",
+          "default": "{PATH}:{LINE1}-{LINE2} ",
+          "description": "Template for multi-line selection. Variables: {PATH}, {LINE1}, {LINE2}"
         }
       }
     }

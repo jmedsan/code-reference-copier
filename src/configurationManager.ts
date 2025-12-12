@@ -10,4 +10,19 @@ export class ConfigurationManager {
     isAutoPasteEnabled(): boolean {
         return process.platform === 'linux' && this.getTargetApplications().length > 0;
     }
+
+    getTemplatePath(): string {
+        const config = vscode.workspace.getConfiguration('codeReferenceCopier');
+        return config.get<string>('templatePath', '{PATH} ');
+    }
+
+    getTemplateSingleLine(): string {
+        const config = vscode.workspace.getConfiguration('codeReferenceCopier');
+        return config.get<string>('templateSingleLine', '{PATH}:{LINE1} ');
+    }
+
+    getTemplateMultiLine(): string {
+        const config = vscode.workspace.getConfiguration('codeReferenceCopier');
+        return config.get<string>('templateMultiLine', '{PATH}:{LINE1}-{LINE2} ');
+    }
 }
