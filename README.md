@@ -39,6 +39,37 @@ Configure terminal applications for auto-paste functionality:
 
 When auto-paste is enabled and a matching terminal is found, the reference will be pasted directly to the terminal instead of copied to clipboard.
 
+### Custom Format Templates
+
+Customize the output format using template variables:
+
+1. Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
+2. Search for "Code Reference Copier"
+3. Configure template options
+
+**Available settings:**
+
+- `codeReferenceCopier.templatePath` - Format for file without selection
+  - Default: `{PATH} `
+  - Variables: `{PATH}`
+
+- `codeReferenceCopier.templateSingleLine` - Format for single line selection
+  - Default: `{PATH}:{LINE1} `
+  - Variables: `{PATH}`, `{LINE1}`
+
+- `codeReferenceCopier.templateMultiLine` - Format for multi-line selection
+  - Default: `{PATH}:{LINE1}-{LINE2} `
+  - Variables: `{PATH}`, `{LINE1}`, `{LINE2}`
+
+**Example custom configuration:**
+```json
+{
+  "codeReferenceCopier.templatePath": "{PATH}",
+  "codeReferenceCopier.templateSingleLine": "{PATH}@{LINE1}",
+  "codeReferenceCopier.templateMultiLine": "{PATH}#{LINE1}:{LINE2}"
+}
+```
+
 ## Examples
 
 **No selection (entire file):**
