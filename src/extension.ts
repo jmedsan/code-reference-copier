@@ -56,6 +56,20 @@ async function tryAutoPaste(reference: string): Promise<boolean> {
     return false;
 }
 
+export function convertWindowsToWslPath(filePath: string): string {
+    if (process.platform !== 'linux') {
+        return filePath;
+    }
+
+    const windowsPathMatch = filePath.match(/^([a-zA-Z]):\//);
+    if (!windowsPathMatch) {
+        return filePath;
+    }
+
+    const driveLetter = windowsPathMatch[1].toLowerCase();
+    return filePath.replace(/^[a-zA-Z]:\//, `/mnt/${driveLetter}/`);
+}
+
 export function formatReference(
     filePath: string,
     selection: vscode.Selection,
@@ -63,8 +77,10 @@ export function formatReference(
     templateSingleLine: string,
     templateMultiLine: string
 ): string {
+    const convertedPath = convertWindowsToWslPath(filePath);
+
     if (selection.isEmpty) {
-        return templatePath.replace('{PATH}', filePath);
+        return templatePath.replace('{PATH}', convertedPath);
     }
 
     const startLine = selection.start.line + 1;
@@ -72,12 +88,12 @@ export function formatReference(
 
     if (startLine === endLine) {
         return templateSingleLine
-            .replace('{PATH}', filePath)
+            .replace('{PATH}', convertedPath)
             .replace('{LINE1}', startLine.toString());
     }
 
     return templateMultiLine
-        .replace('{PATH}', filePath)
+        .replace('{PATH}', convertedPath)
         .replace('{LINE1}', startLine.toString())
         .replace('{LINE2}', endLine.toString());
 }

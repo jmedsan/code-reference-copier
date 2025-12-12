@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { formatReference, copyReference } from '../extension';
+import { formatReference, copyReference, convertWindowsToWslPath } from '../extension';
 
 // Mock VS Code Selection class for testing
 class MockSelection implements vscode.Selection {
@@ -44,6 +44,84 @@ const LONG_PATH = '/very/long/path/'.repeat(50) + 'file.js';
 const UNICODE_PATH = '/测试/файл/🚀/file.js';
 
 suite('Extension Test Suite', () => {
+
+    suite('convertWindowsToWslPath Tests', () => {
+
+        test('Converts lowercase Windows path to WSL on Linux', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const result = convertWindowsToWslPath('c:/dev/project/file.ts');
+            assert.strictEqual(result, '/mnt/c/dev/project/file.ts');
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+
+        test('Converts uppercase Windows path to WSL on Linux', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const result = convertWindowsToWslPath('C:/dev/project/file.ts');
+            assert.strictEqual(result, '/mnt/c/dev/project/file.ts');
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+
+        test('Converts all drive letters (a-z)', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const drives = ['a', 'b', 'd', 'z', 'A', 'D', 'Z'];
+            drives.forEach(drive => {
+                const input = `${drive}:/test/file.ts`;
+                const expected = `/mnt/${drive.toLowerCase()}/test/file.ts`;
+                const result = convertWindowsToWslPath(input);
+                assert.strictEqual(result, expected, `Drive ${drive} conversion failed`);
+            });
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+
+        test('Returns unchanged for non-Windows paths on Linux', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const paths = [
+                '/home/user/file.ts',
+                '/mnt/c/already/wsl/path.ts',
+                './relative/path.ts',
+                '../parent/path.ts',
+                'no-leading-slash.ts'
+            ];
+
+            paths.forEach(path => {
+                const result = convertWindowsToWslPath(path);
+                assert.strictEqual(result, path, `Path ${path} should remain unchanged`);
+            });
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+
+        test('Returns unchanged on non-Linux platforms', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'win32' });
+
+            const result = convertWindowsToWslPath('c:/dev/project/file.ts');
+            assert.strictEqual(result, 'c:/dev/project/file.ts');
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+
+        test('Handles already converted WSL paths', () => {
+            const originalPlatform = process.platform;
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const result = convertWindowsToWslPath('/mnt/d/project/file.ts');
+            assert.strictEqual(result, '/mnt/d/project/file.ts');
+
+            Object.defineProperty(process, 'platform', { value: originalPlatform });
+        });
+    });
 
     suite('Property-based Tests', () => {
 
@@ -157,21 +235,14 @@ suite('Extension Test Suite', () => {
     suite('copyReference Integration Tests', () => {
 
         test('Without active editor - handles gracefully (no crash)', async () => {
-            // Save current editor state
-            const originalEditor = vscode.window.activeTextEditor;
+            // Set activeTextEditor to undefined by closing all editors
+            await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 
-            try {
-                // Set activeTextEditor to undefined by closing all editors
-                await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+            // Execute copyReference - should not throw
+            await copyReference();
 
-                // Execute copyReference - should not throw
-                await copyReference();
-
-                // If we get here without throwing, test passes
-                assert.ok(true, 'copyReference handled missing editor gracefully');
-            } finally {
-                // Restore original state (not strictly necessary in tests but good practice)
-            }
+            // If we get here without throwing, test passes
+            assert.ok(true, 'copyReference handled missing editor gracefully');
         });
 
         test('Integration with formatReference - orchestrates correctly', () => {
