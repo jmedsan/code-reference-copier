@@ -29,7 +29,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:code-reference-copier.copyReference"
+    "onCommand:code-reference-copier.copyReference",
+    "onCommand:code-reference-copier.copyReferenceWithText"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -37,6 +38,10 @@
       {
         "command": "code-reference-copier.copyReference",
         "title": "Copy Code Reference"
+      },
+      {
+        "command": "code-reference-copier.copyReferenceWithText",
+        "title": "Copy Code Reference with Text"
       }
     ],
     "keybindings": [
@@ -44,6 +49,12 @@
         "command": "code-reference-copier.copyReference",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "code-reference-copier.copyReferenceWithText",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
         "when": "editorTextFocus"
       }
     ],
@@ -72,6 +83,11 @@
           "type": "string",
           "default": "{PATH}:{LINE1}-{LINE2} ",
           "description": "Template for multi-line selection. Variables: {PATH}, {LINE1}, {LINE2}"
+        },
+        "codeReferenceCopier.templateWithText": {
+          "type": "string",
+          "default": "\n\n{TEXT}\n\n",
+          "description": "Template appended to base reference when copying with text. This is APPENDED to the standard reference format (not a replacement). Variable: {TEXT}"
         }
       }
     }

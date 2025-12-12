@@ -6,16 +6,28 @@ const configManager = new ConfigurationManager();
 const terminalDetector = new TerminalDetector();
 
 export function activate(context: vscode.ExtensionContext) {
-    const disposable = vscode.commands.registerCommand(
+    const copyReferenceDisposable = vscode.commands.registerCommand(
         'code-reference-copier.copyReference',
-        copyReference
+        copyReferenceCommand
     );
-    context.subscriptions.push(disposable);
+    const copyReferenceWithTextDisposable = vscode.commands.registerCommand(
+        'code-reference-copier.copyReferenceWithText',
+        copyReferenceWithTextCommand
+    );
+    context.subscriptions.push(copyReferenceDisposable, copyReferenceWithTextDisposable);
 }
 
 export function deactivate() {}
 
-export async function copyReference() {
+export async function copyReferenceCommand(): Promise<void> {
+    return copyReference(false);
+}
+
+export async function copyReferenceWithTextCommand(): Promise<void> {
+    return copyReference(true);
+}
+
+async function copyReference(includeText: boolean) {
     try {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -30,7 +42,16 @@ export async function copyReference() {
         const templateSingleLine = configManager.getTemplateSingleLine();
         const templateMultiLine = configManager.getTemplateMultiLine();
 
-        const reference = formatReference(filePath, selection, templatePath, templateSingleLine, templateMultiLine);
+        // Generate base reference format
+        let reference = formatReference(filePath, selection, templatePath, templateSingleLine, templateMultiLine);
+
+        // Append-only template pattern: when includeText is true, append the selected text
+        // using templateWithText. This maintains the base reference format while adding text content.
+        if (includeText) {
+            const selectedText = editor.document.getText(selection);
+            const templateWithText = configManager.getTemplateWithText();
+            reference += templateWithText.replace('{TEXT}', selectedText);
+        }
 
         const pasted = await tryAutoPaste(reference);
         if (!pasted) {

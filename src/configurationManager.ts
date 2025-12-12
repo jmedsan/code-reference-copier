@@ -25,4 +25,9 @@ export class ConfigurationManager {
         const config = vscode.workspace.getConfiguration('codeReferenceCopier');
         return config.get<string>('templateMultiLine', '{PATH}:{LINE1}-{LINE2} ');
     }
+
+    getTemplateWithText(): string {
+        const config = vscode.workspace.getConfiguration('codeReferenceCopier');
+        return config.get<string>('templateWithText', '\n\n{TEXT}\n\n');
+    }
 }
