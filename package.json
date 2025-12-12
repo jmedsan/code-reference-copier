@@ -2,7 +2,7 @@
   "name": "code-reference-copier",
   "displayName": "Code Reference Copier",
   "description": "Copy file references with line ranges in standard CLI format. Auto-paste to terminal applications on Linux.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "jmedsan",
   "keywords": [
     "code",
