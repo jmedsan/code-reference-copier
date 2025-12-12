@@ -88,4 +88,37 @@ suite('ConfigurationManager Test Suite', () => {
         mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
         assert.strictEqual(configManager.isAutoPasteEnabled(), true);
     });
+
+    test('getTemplatePath returns default template', () => {
+        const template = configManager.getTemplatePath();
+        assert.strictEqual(template, '{PATH} ');
+    });
+
+    test('getTemplatePath returns configured template', () => {
+        mockConfig.setConfig('templatePath', '{PATH}');
+        const template = configManager.getTemplatePath();
+        assert.strictEqual(template, '{PATH}');
+    });
+
+    test('getTemplateSingleLine returns default template', () => {
+        const template = configManager.getTemplateSingleLine();
+        assert.strictEqual(template, '{PATH}:{LINE1} ');
+    });
+
+    test('getTemplateSingleLine returns configured template', () => {
+        mockConfig.setConfig('templateSingleLine', '{PATH}@{LINE1}');
+        const template = configManager.getTemplateSingleLine();
+        assert.strictEqual(template, '{PATH}@{LINE1}');
+    });
+
+    test('getTemplateMultiLine returns default template', () => {
+        const template = configManager.getTemplateMultiLine();
+        assert.strictEqual(template, '{PATH}:{LINE1}-{LINE2} ');
+    });
+
+    test('getTemplateMultiLine returns configured template', () => {
+        mockConfig.setConfig('templateMultiLine', '{PATH}#{LINE1}:{LINE2}');
+        const template = configManager.getTemplateMultiLine();
+        assert.strictEqual(template, '{PATH}#{LINE1}:{LINE2}');
+    });
 });

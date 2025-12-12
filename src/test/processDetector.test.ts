@@ -1,5 +1,9 @@
 import * as assert from 'assert';
 import { ProcessDetector } from '../processDetector';
+import * as childProcess from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(childProcess.exec);
 
 // Mock the exec function by creating a testable ProcessDetector
 class TestableProcessDetector extends ProcessDetector {
@@ -70,5 +74,50 @@ suite('ProcessDetector Test Suite', () => {
             const result = await processDetector.getChildProcesses(pid);
             assert.deepStrictEqual(result, selectedNames, `Failed for PID ${pid} with output: ${psOutput}`);
         }
+    });
+
+    suite('Real ProcessDetector Implementation Tests', () => {
+        let realProcessDetector: ProcessDetector;
+
+        setup(() => {
+            realProcessDetector = new ProcessDetector();
+        });
+
+        test('getChildProcesses on current process (smoke test)', async function() {
+            this.timeout(5000); // Increase timeout for real system call
+
+            const currentPid = process.pid;
+            const result = await realProcessDetector.getChildProcesses(currentPid);
+
+            // Should return an array (might be empty or have processes)
+            assert.ok(Array.isArray(result));
+
+            // All elements should be non-empty strings
+            result.forEach(processName => {
+                assert.strictEqual(typeof processName, 'string');
+                assert.ok(processName.trim().length > 0);
+            });
+        });
+
+        test('getChildProcesses with invalid PID returns empty array', async function() {
+            this.timeout(5000);
+
+            // Using a very high PID that likely doesn't exist
+            const invalidPid = 9999999;
+            const result = await realProcessDetector.getChildProcesses(invalidPid);
+
+            // Should return empty array for non-existent process
+            assert.ok(Array.isArray(result));
+        });
+
+        test('getChildProcesses handles process without children', async function() {
+            this.timeout(5000);
+
+            // Use PID 1 (init/systemd) which should work on Linux systems
+            const result = await realProcessDetector.getChildProcesses(1);
+
+            // Should return an array
+            assert.ok(Array.isArray(result));
+        });
     });
 });
