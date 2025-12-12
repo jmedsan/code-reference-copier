@@ -1,16 +1,17 @@
 import * as assert from 'assert';
 import { ProcessDetector } from '../processDetector';
-import * as childProcess from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(childProcess.exec);
 
 // Mock the exec function by creating a testable ProcessDetector
 class TestableProcessDetector extends ProcessDetector {
     private mockExecResult: { error: Error | null; stdout: string; stderr: string } | null = null;
+    private mockPlatform: string = 'linux';
 
     setMockExecResult(error: Error | null, stdout: string, stderr: string = '') {
         this.mockExecResult = { error, stdout, stderr };
+    }
+
+    setMockPlatform(platform: string) {
+        this.mockPlatform = platform;
     }
 
     async getChildProcesses(parentPid: number): Promise<string[]> {
@@ -24,6 +25,11 @@ class TestableProcessDetector extends ProcessDetector {
         }
 
         const stdout = this.mockExecResult.stdout;
+        return this.parseOutputForTest(stdout, this.mockPlatform);
+    }
+
+    private parseOutputForTest(stdout: string, platform: string): string[] {
+        // All platforms now output simple newline-separated process names
         return stdout.trim().split('\n').filter(line => line.trim().length > 0);
     }
 }
@@ -74,6 +80,30 @@ suite('ProcessDetector Test Suite', () => {
             const result = await processDetector.getChildProcesses(pid);
             assert.deepStrictEqual(result, selectedNames, `Failed for PID ${pid} with output: ${psOutput}`);
         }
+    });
+
+    test('getChildProcesses parses Windows PowerShell output correctly', async () => {
+        processDetector.setMockPlatform('win32');
+        processDetector.setMockExecResult(null, 'claude.exe\ncmd.exe\nnode.exe\n');
+
+        const result = await processDetector.getChildProcesses(1234);
+        assert.deepStrictEqual(result, ['claude.exe', 'cmd.exe', 'node.exe']);
+    });
+
+    test('getChildProcesses handles empty Windows PowerShell output', async () => {
+        processDetector.setMockPlatform('win32');
+        processDetector.setMockExecResult(null, '');
+
+        const result = await processDetector.getChildProcesses(1234);
+        assert.deepStrictEqual(result, []);
+    });
+
+    test('getChildProcesses parses macOS ps output correctly', async () => {
+        processDetector.setMockPlatform('darwin');
+        processDetector.setMockExecResult(null, 'claude\nzsh\nnode\n');
+
+        const result = await processDetector.getChildProcesses(1234);
+        assert.deepStrictEqual(result, ['claude', 'zsh', 'node']);
     });
 
     suite('Real ProcessDetector Implementation Tests', () => {

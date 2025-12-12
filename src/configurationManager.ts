@@ -8,7 +8,8 @@ export class ConfigurationManager {
     }
 
     isAutoPasteEnabled(): boolean {
-        return process.platform === 'linux' && this.getTargetApplications().length > 0;
+        const supportedPlatforms = ['linux', 'darwin', 'win32'];
+        return supportedPlatforms.includes(process.platform) && this.getTargetApplications().length > 0;
     }
 
     getTemplatePath(): string {

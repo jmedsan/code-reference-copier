@@ -35,9 +35,9 @@ npx vsce package
 
 ## Testing
 
-### System Dependencies (Linux only)
+### System dependencies for running tests on Linux
 
-On Linux, VS Code's test runner requires several system libraries. Install the build dependencies:
+VS Code's test runner requires several system libraries on Linux. Install these dependencies:
 
 **Debian/Ubuntu:**
 ```bash
@@ -73,8 +73,8 @@ rm -rf coverage/
 - Overall: >85%
 - Function coverage: 100% (all functions tested)
 - configurationManager.ts: 100%
-- terminalDetector.ts: 100%
-- Core modules (extension.ts, processDetector.ts): >80%
+- processDetector.ts: 100%
+- Core modules (extension.ts): >80%
 
 The test suite includes:
 - Property-based testing (100 random iterations)

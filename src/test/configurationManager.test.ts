@@ -68,25 +68,35 @@ suite('ConfigurationManager Test Suite', () => {
         assert.deepStrictEqual(apps, ['kiro-cli', 'copilot']);
     });
 
-    test('isAutoPasteEnabled returns false on non-Linux platforms', () => {
-        Object.defineProperty(process, 'platform', { value: 'win32' });
+    test('isAutoPasteEnabled returns true on supported platforms with configured applications', () => {
         mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
+
+        Object.defineProperty(process, 'platform', { value: 'linux' });
+        assert.strictEqual(configManager.isAutoPasteEnabled(), true);
+
+        Object.defineProperty(process, 'platform', { value: 'darwin' });
+        assert.strictEqual(configManager.isAutoPasteEnabled(), true);
+
+        Object.defineProperty(process, 'platform', { value: 'win32' });
+        assert.strictEqual(configManager.isAutoPasteEnabled(), true);
+    });
+
+    test('isAutoPasteEnabled returns false on unsupported platforms', () => {
+        Object.defineProperty(process, 'platform', { value: 'freebsd' });
+        mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
+        assert.strictEqual(configManager.isAutoPasteEnabled(), false);
+    });
+
+    test('isAutoPasteEnabled returns false with empty applications', () => {
+        Object.defineProperty(process, 'platform', { value: 'linux' });
+        mockConfig.setConfig('autoPasteApplications', []);
         assert.strictEqual(configManager.isAutoPasteEnabled(), false);
 
         Object.defineProperty(process, 'platform', { value: 'darwin' });
         assert.strictEqual(configManager.isAutoPasteEnabled(), false);
-    });
 
-    test('isAutoPasteEnabled returns false on Linux with empty applications', () => {
-        Object.defineProperty(process, 'platform', { value: 'linux' });
-        mockConfig.setConfig('autoPasteApplications', []);
+        Object.defineProperty(process, 'platform', { value: 'win32' });
         assert.strictEqual(configManager.isAutoPasteEnabled(), false);
-    });
-
-    test('isAutoPasteEnabled returns true on Linux with configured applications', () => {
-        Object.defineProperty(process, 'platform', { value: 'linux' });
-        mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
-        assert.strictEqual(configManager.isAutoPasteEnabled(), true);
     });
 
     test('getTemplatePath returns default template', () => {

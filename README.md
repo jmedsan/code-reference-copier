@@ -1,6 +1,6 @@
 # Code Reference Copier
 
-Copy file references with line ranges using the standard CLI format. Auto-paste to terminal applications on Linux.
+Copy file references with line ranges using the standard CLI format. Auto-paste to terminal applications on Linux, macOS, and Windows.
 
 ## Features
 
@@ -8,7 +8,7 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
 - Copy file reference with single line: `/absolute/path/to/file.js:15`
 - Copy file reference with line range: `/absolute/path/to/file.js:10-25`
 - Copy code reference with selected text attached
-- **Auto-paste to terminal applications** (Linux only)
+- **Auto-paste to terminal applications** (Linux, macOS, Windows)
 - Works with any file type in VS Code
 - Uses absolute paths with OS-appropriate separators
 - Keyboard shortcuts:
@@ -26,7 +26,7 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
    - **Copy reference with text**: `Ctrl+Alt+T` / `Cmd+Alt+T` OR Command Palette → "Copy Code Reference with Text"
 4. Reference is copied to clipboard or auto-pasted to terminal
 
-### Auto-Paste Configuration (Linux Only)
+### Auto-Paste Configuration
 
 Configure terminal applications for auto-paste functionality:
 
@@ -37,7 +37,7 @@ Configure terminal applications for auto-paste functionality:
 **Example configuration:**
 ```json
 {
-  "codeReferenceCopier.autoPasteApplications": ["kiro-cli", "copilot"]
+  "codeReferenceCopier.autoPasteApplications": ["kiro-cli", "copilot", "edit.exe"]
 }
 ```
 
@@ -111,14 +111,13 @@ const value = calculate();
 
 ## Platform Support
 
-- **All platforms**: Basic copy-to-clipboard functionality
-- **Linux only**: Auto-paste to terminal applications
-- **Windows/macOS**: Auto-paste gracefully falls back to clipboard
+- **All platforms**: Copy-to-clipboard and auto-paste to terminal applications
+- **Linux/macOS**: Uses `ps` + pure shell for process detection (zero external dependencies)
+- **Windows**: Uses PowerShell for process detection (built-in since Windows 10)
 
 ## Requirements
 
 - VS Code 1.60.0 or higher
-- Linux (for auto-paste functionality)
 
 ## Installation
 
