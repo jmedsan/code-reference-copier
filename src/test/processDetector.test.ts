@@ -57,22 +57,22 @@ suite('ProcessDetector Test Suite', () => {
     });
 
     test('getChildProcesses returns process info from ps output', async () => {
-        processDetector.setMockExecResult(null, '1001,kiro-cli-chat\n1002,copilot\n1003,bash\n');
+        processDetector.setMockExecResult(null, '1001,kiro-cli\n1002,copilot\n1003,bash\n');
 
         const result = await processDetector.getChildProcesses(1234);
         assert.deepStrictEqual(result, [
-            { pid: 1001, name: 'kiro-cli-chat' },
+            { pid: 1001, name: 'kiro-cli' },
             { pid: 1002, name: 'copilot' },
             { pid: 1003, name: 'bash' }
         ]);
     });
 
     test('getChildProcesses filters empty lines', async () => {
-        processDetector.setMockExecResult(null, '1001,kiro-cli-chat\n\n1002,copilot\n  \n');
+        processDetector.setMockExecResult(null, '1001,kiro-cli\n\n1002,copilot\n  \n');
 
         const result = await processDetector.getChildProcesses(5678);
         assert.deepStrictEqual(result, [
-            { pid: 1001, name: 'kiro-cli-chat' },
+            { pid: 1001, name: 'kiro-cli' },
             { pid: 1002, name: 'copilot' }
         ]);
     });
@@ -94,7 +94,7 @@ suite('ProcessDetector Test Suite', () => {
     test('Property-based test: process info parsing - 100 iterations', async () => {
         for (let i = 0; i < 100; i++) {
             const pid = Math.floor(Math.random() * 10000);
-            const processNames = ['kiro-cli-chat', 'copilot', 'bash', 'zsh', 'node', 'python3'];
+            const processNames = ['kiro-cli', 'copilot', 'bash', 'zsh', 'node', 'python3'];
             const selectedNames = processNames.slice(0, Math.floor(Math.random() * processNames.length) + 1);
             const psOutput = selectedNames.map((name, idx) => `${2000 + idx},${name}`).join('\n') + '\n';
             const expected = selectedNames.map((name, idx) => ({ pid: 2000 + idx, name }));

@@ -15,6 +15,10 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
   - `Ctrl+Alt+K` (Linux/Windows) / `Cmd+Alt+K` (Mac) - Copy reference only
   - `Ctrl+Alt+T` (Linux/Windows) / `Cmd+Alt+T` (Mac) - Copy reference with text
 
+## Great for AI CLI Coders
+
+The auto-paste feature is particularly useful when working with AI coding assistants like **Claude**, **Kiro**, and **GitHub Copilot** in the terminal. Instead of manually copying references, select code in VS Code and press `Ctrl+Alt+K` to instantly paste it into your AI CLI tool. Configure your preferred terminal applications in settings to enable this streamlined workflow.
+
 ## Usage
 
 ### Basic Usage
@@ -37,7 +41,7 @@ Configure terminal applications for auto-paste functionality:
 **Example configuration:**
 ```json
 {
-  "codeReferenceCopier.autoPasteApplications": ["kiro-cli-chat", "copilot", "edit.exe"]
+  "codeReferenceCopier.autoPasteApplications": ["claude", "kiro-cli", "copilot", "edit.exe"]
 }
 ```
 

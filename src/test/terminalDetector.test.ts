@@ -70,7 +70,7 @@ suite('TerminalDetector Test Suite', () => {
     test('findMatchingTerminal returns null when no terminals exist', async () => {
         Object.defineProperty(vscode.window, 'terminals', { value: [] });
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -83,7 +83,7 @@ suite('TerminalDetector Test Suite', () => {
             { pid: 2001, name: 'vim' }
         ]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -93,11 +93,11 @@ suite('TerminalDetector Test Suite', () => {
 
         mockProcessDetector.setMockResult(1234, [
             { pid: 2000, name: 'bash' },
-            { pid: 2001, name: 'kiro-cli-chat' },
+            { pid: 2001, name: 'kiro-cli' },
             { pid: 2002, name: 'vim' }
         ]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, mockTerminal);
     });
 
@@ -111,7 +111,7 @@ suite('TerminalDetector Test Suite', () => {
             { pid: 2002, name: 'vim' }
         ]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -120,10 +120,10 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal2 = new MockTerminal('terminal2', 5678);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal1, mockTerminal2] });
 
-        mockProcessDetector.setMockResult(1234, [{ pid: 2000, name: 'kiro-cli-chat' }]);
+        mockProcessDetector.setMockResult(1234, [{ pid: 2000, name: 'kiro-cli' }]);
         mockProcessDetector.setMockResult(5678, [{ pid: 3000, name: 'copilot' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat', 'copilot']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli', 'copilot']);
         assert.strictEqual(result, mockTerminal1);
     });
 
@@ -132,9 +132,9 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal2 = new MockTerminal('terminal2', 5678);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal1, mockTerminal2] });
 
-        mockProcessDetector.setMockResult(5678, [{ pid: 3000, name: 'kiro-cli-chat' }]);
+        mockProcessDetector.setMockResult(5678, [{ pid: 3000, name: 'kiro-cli' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, mockTerminal2);
     });
 
@@ -173,7 +173,7 @@ suite('TerminalDetector Test Suite', () => {
             { pid: 3001, name: 'npm' }
         ]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -183,7 +183,7 @@ suite('TerminalDetector Test Suite', () => {
 
         mockProcessDetector.setMockResult(1234, [
             { pid: 2000, name: 'bash' },
-            { pid: 2001, name: 'kiro-cli-chat' }
+            { pid: 2001, name: 'kiro-cli' }
         ]);
 
         const result = await terminalDetector.findMatchingTerminal([]);
@@ -199,7 +199,7 @@ suite('TerminalDetector Test Suite', () => {
         mockProcessDetector.setMockResult(1234, []);
         mockProcessDetector.setMockResult(5678, []);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -209,10 +209,10 @@ suite('TerminalDetector Test Suite', () => {
 
         // Level 1: terminal -> bash (PID 2000)
         mockProcessDetector.setMockResult(1234, [{ pid: 2000, name: 'bash' }]);
-        // Level 2: bash -> kiro-cli-chat (PID 2100)
-        mockProcessDetector.setMockResult(2000, [{ pid: 2100, name: 'kiro-cli-chat' }]);
+        // Level 2: bash -> kiro-cli (PID 2100)
+        mockProcessDetector.setMockResult(2000, [{ pid: 2100, name: 'kiro-cli' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, mockTerminal);
     });
 
@@ -224,10 +224,10 @@ suite('TerminalDetector Test Suite', () => {
         mockProcessDetector.setMockResult(1234, [{ pid: 2000, name: 'bash' }]);
         // Level 2: bash -> wrapper script (PID 2100)
         mockProcessDetector.setMockResult(2000, [{ pid: 2100, name: 'wrapper.sh' }]);
-        // Level 3: wrapper -> kiro-cli-chat (PID 2200)
-        mockProcessDetector.setMockResult(2100, [{ pid: 2200, name: 'kiro-cli-chat' }]);
+        // Level 3: wrapper -> kiro-cli (PID 2200)
+        mockProcessDetector.setMockResult(2100, [{ pid: 2200, name: 'kiro-cli' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, mockTerminal);
     });
 
@@ -241,10 +241,10 @@ suite('TerminalDetector Test Suite', () => {
         mockProcessDetector.setMockResult(2000, [{ pid: 2100, name: 'script1' }]);
         // Level 3: script1 -> script2 (PID 2200)
         mockProcessDetector.setMockResult(2100, [{ pid: 2200, name: 'script2' }]);
-        // Level 4: script2 -> kiro-cli-chat (PID 2300) - should NOT be found
-        mockProcessDetector.setMockResult(2200, [{ pid: 2300, name: 'kiro-cli-chat' }]);
+        // Level 4: script2 -> kiro-cli (PID 2300) - should NOT be found
+        mockProcessDetector.setMockResult(2200, [{ pid: 2300, name: 'kiro-cli' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
     });
 
@@ -259,10 +259,10 @@ suite('TerminalDetector Test Suite', () => {
         ]);
         // Level 2: bash -> vim (PID 2100)
         mockProcessDetector.setMockResult(2000, [{ pid: 2100, name: 'vim' }]);
-        // Level 2: zsh -> kiro-cli-chat (PID 2101)
-        mockProcessDetector.setMockResult(2001, [{ pid: 2101, name: 'kiro-cli-chat' }]);
+        // Level 2: zsh -> kiro-cli (PID 2101)
+        mockProcessDetector.setMockResult(2001, [{ pid: 2101, name: 'kiro-cli' }]);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, mockTerminal);
     });
 });
