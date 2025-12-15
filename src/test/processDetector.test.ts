@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { ProcessDetector } from '../processDetector';
+import { ProcessDetector, ProcessInfo } from '../processDetector';
 
 // Mock the exec function by creating a testable ProcessDetector
 class TestableProcessDetector extends ProcessDetector {
@@ -14,7 +14,7 @@ class TestableProcessDetector extends ProcessDetector {
         this.mockPlatform = platform;
     }
 
-    async getChildProcesses(parentPid: number): Promise<string[]> {
+    async getChildProcesses(parentPid: number): Promise<ProcessInfo[]> {
         if (!this.mockExecResult) {
             throw new Error('Mock result not set');
         }
@@ -25,12 +25,27 @@ class TestableProcessDetector extends ProcessDetector {
         }
 
         const stdout = this.mockExecResult.stdout;
-        return this.parseOutputForTest(stdout, this.mockPlatform);
+        return this.parseOutputForTest(stdout);
     }
 
-    private parseOutputForTest(stdout: string, platform: string): string[] {
-        // All platforms now output simple newline-separated process names
-        return stdout.trim().split('\n').filter(line => line.trim().length > 0);
+    private parseOutputForTest(stdout: string): ProcessInfo[] {
+        // Parse comma-separated "pid,name" format from both platforms
+        return stdout
+            .trim()
+            .split('\n')
+            .filter(line => line.trim().length > 0)
+            .map(line => {
+                const parts = line.trim().split(',');
+                if (parts.length >= 2) {
+                    const pid = parseInt(parts[0], 10);
+                    const name = parts.slice(1).join(',');
+                    if (!isNaN(pid)) {
+                        return { pid, name };
+                    }
+                }
+                return null;
+            })
+            .filter((info): info is ProcessInfo => info !== null);
     }
 }
 
@@ -41,18 +56,25 @@ suite('ProcessDetector Test Suite', () => {
         processDetector = new TestableProcessDetector();
     });
 
-    test('getChildProcesses returns process names from ps output', async () => {
-        processDetector.setMockExecResult(null, 'kiro-cli-chat\ncopilot\nbash\n');
+    test('getChildProcesses returns process info from ps output', async () => {
+        processDetector.setMockExecResult(null, '1001,kiro-cli-chat\n1002,copilot\n1003,bash\n');
 
         const result = await processDetector.getChildProcesses(1234);
-        assert.deepStrictEqual(result, ['kiro-cli-chat', 'copilot', 'bash']);
+        assert.deepStrictEqual(result, [
+            { pid: 1001, name: 'kiro-cli-chat' },
+            { pid: 1002, name: 'copilot' },
+            { pid: 1003, name: 'bash' }
+        ]);
     });
 
     test('getChildProcesses filters empty lines', async () => {
-        processDetector.setMockExecResult(null, 'kiro-cli-chat\n\ncopilot\n  \n');
+        processDetector.setMockExecResult(null, '1001,kiro-cli-chat\n\n1002,copilot\n  \n');
 
         const result = await processDetector.getChildProcesses(5678);
-        assert.deepStrictEqual(result, ['kiro-cli-chat', 'copilot']);
+        assert.deepStrictEqual(result, [
+            { pid: 1001, name: 'kiro-cli-chat' },
+            { pid: 1002, name: 'copilot' }
+        ]);
     });
 
     test('getChildProcesses returns empty array on ps command failure', async () => {
@@ -69,25 +91,30 @@ suite('ProcessDetector Test Suite', () => {
         assert.deepStrictEqual(result, []);
     });
 
-    test('Property-based test: process name parsing - 100 iterations', async () => {
+    test('Property-based test: process info parsing - 100 iterations', async () => {
         for (let i = 0; i < 100; i++) {
             const pid = Math.floor(Math.random() * 10000);
             const processNames = ['kiro-cli-chat', 'copilot', 'bash', 'zsh', 'node', 'python3'];
             const selectedNames = processNames.slice(0, Math.floor(Math.random() * processNames.length) + 1);
-            const psOutput = selectedNames.join('\n') + '\n';
+            const psOutput = selectedNames.map((name, idx) => `${2000 + idx},${name}`).join('\n') + '\n';
+            const expected = selectedNames.map((name, idx) => ({ pid: 2000 + idx, name }));
 
             processDetector.setMockExecResult(null, psOutput);
             const result = await processDetector.getChildProcesses(pid);
-            assert.deepStrictEqual(result, selectedNames, `Failed for PID ${pid} with output: ${psOutput}`);
+            assert.deepStrictEqual(result, expected, `Failed for PID ${pid} with output: ${psOutput}`);
         }
     });
 
     test('getChildProcesses parses Windows PowerShell output correctly', async () => {
         processDetector.setMockPlatform('win32');
-        processDetector.setMockExecResult(null, 'claude.exe\ncmd.exe\nnode.exe\n');
+        processDetector.setMockExecResult(null, '2001,claude.exe\n2002,cmd.exe\n2003,node.exe\n');
 
         const result = await processDetector.getChildProcesses(1234);
-        assert.deepStrictEqual(result, ['claude.exe', 'cmd.exe', 'node.exe']);
+        assert.deepStrictEqual(result, [
+            { pid: 2001, name: 'claude.exe' },
+            { pid: 2002, name: 'cmd.exe' },
+            { pid: 2003, name: 'node.exe' }
+        ]);
     });
 
     test('getChildProcesses handles empty Windows PowerShell output', async () => {
@@ -100,10 +127,14 @@ suite('ProcessDetector Test Suite', () => {
 
     test('getChildProcesses parses macOS ps output correctly', async () => {
         processDetector.setMockPlatform('darwin');
-        processDetector.setMockExecResult(null, 'claude\nzsh\nnode\n');
+        processDetector.setMockExecResult(null, '3001,claude\n3002,zsh\n3003,node\n');
 
         const result = await processDetector.getChildProcesses(1234);
-        assert.deepStrictEqual(result, ['claude', 'zsh', 'node']);
+        assert.deepStrictEqual(result, [
+            { pid: 3001, name: 'claude' },
+            { pid: 3002, name: 'zsh' },
+            { pid: 3003, name: 'node' }
+        ]);
     });
 
     suite('Real ProcessDetector Implementation Tests', () => {
@@ -122,10 +153,13 @@ suite('ProcessDetector Test Suite', () => {
             // Should return an array (might be empty or have processes)
             assert.ok(Array.isArray(result));
 
-            // All elements should be non-empty strings
-            result.forEach(processName => {
-                assert.strictEqual(typeof processName, 'string');
-                assert.ok(processName.trim().length > 0);
+            // All elements should be ProcessInfo objects with pid and name
+            result.forEach(processInfo => {
+                assert.ok(typeof processInfo === 'object');
+                assert.ok(typeof processInfo.pid === 'number');
+                assert.ok(processInfo.pid > 0);
+                assert.ok(typeof processInfo.name === 'string');
+                assert.ok(processInfo.name.trim().length > 0);
             });
         });
 
