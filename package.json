@@ -67,7 +67,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "List of terminal applications to auto-paste code references to (Linux, macOS, Windows). Examples: [\"claude\", \"kiro-cli\", \"edit.exe\"]"
+          "description": "List of terminal applications to auto-paste code references to (Linux, macOS, Windows). Examples: [\"claude\", \"kiro-cli-chat\", \"edit.exe\"]"
         },
         "codeReferenceCopier.templatePath": {
           "type": "string",

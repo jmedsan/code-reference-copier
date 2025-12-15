@@ -70,7 +70,7 @@ suite('TerminalDetector Test Suite', () => {
     test('findMatchingTerminal returns null when no terminals exist', async () => {
         Object.defineProperty(vscode.window, 'terminals', { value: [] });
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, null);
     });
 
@@ -80,7 +80,7 @@ suite('TerminalDetector Test Suite', () => {
 
         mockProcessDetector.setMockResult(1234, ['bash', 'vim']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, null);
     });
 
@@ -88,9 +88,9 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal = new MockTerminal('terminal1', 1234);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal] });
 
-        mockProcessDetector.setMockResult(1234, ['bash', 'kiro-cli', 'vim']);
+        mockProcessDetector.setMockResult(1234, ['bash', 'kiro-cli-chat', 'vim']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, mockTerminal);
     });
 
@@ -98,9 +98,9 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal = new MockTerminal('terminal1', 1234);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal] });
 
-        mockProcessDetector.setMockResult(1234, ['bash', 'KIRO-CLI', 'vim']);
+        mockProcessDetector.setMockResult(1234, ['bash', 'KIRO-CLI-CHAT', 'vim']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, null);
     });
 
@@ -109,10 +109,10 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal2 = new MockTerminal('terminal2', 5678);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal1, mockTerminal2] });
 
-        mockProcessDetector.setMockResult(1234, ['kiro-cli']);
+        mockProcessDetector.setMockResult(1234, ['kiro-cli-chat']);
         mockProcessDetector.setMockResult(5678, ['copilot']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli', 'copilot']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat', 'copilot']);
         assert.strictEqual(result, mockTerminal1);
     });
 
@@ -121,9 +121,9 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal2 = new MockTerminal('terminal2', 5678);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal1, mockTerminal2] });
 
-        mockProcessDetector.setMockResult(5678, ['kiro-cli']);
+        mockProcessDetector.setMockResult(5678, ['kiro-cli-chat']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, mockTerminal2);
     });
 
@@ -156,7 +156,7 @@ suite('TerminalDetector Test Suite', () => {
         mockProcessDetector.setMockResult(1234, ['bash', 'vim']);
         mockProcessDetector.setMockResult(5678, ['node', 'npm']);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, null);
     });
 
@@ -164,7 +164,7 @@ suite('TerminalDetector Test Suite', () => {
         const mockTerminal1 = new MockTerminal('terminal1', 1234);
         Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal1] });
 
-        mockProcessDetector.setMockResult(1234, ['bash', 'kiro-cli']);
+        mockProcessDetector.setMockResult(1234, ['bash', 'kiro-cli-chat']);
 
         const result = await terminalDetector.findMatchingTerminal([]);
         assert.strictEqual(result, null);
@@ -179,7 +179,7 @@ suite('TerminalDetector Test Suite', () => {
         mockProcessDetector.setMockResult(1234, []);
         mockProcessDetector.setMockResult(5678, []);
 
-        const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
+        const result = await terminalDetector.findMatchingTerminal(['kiro-cli-chat']);
         assert.strictEqual(result, null);
     });
 });

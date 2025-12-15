@@ -57,19 +57,19 @@ suite('ConfigurationManager Test Suite', () => {
     });
 
     test('getTargetApplications returns configured applications', () => {
-        mockConfig.setConfig('autoPasteApplications', ['kiro-cli', 'copilot']);
+        mockConfig.setConfig('autoPasteApplications', ['kiro-cli-chat', 'copilot']);
         const apps = configManager.getTargetApplications();
-        assert.deepStrictEqual(apps, ['kiro-cli', 'copilot']);
+        assert.deepStrictEqual(apps, ['kiro-cli-chat', 'copilot']);
     });
 
     test('getTargetApplications filters out invalid entries', () => {
-        mockConfig.setConfig('autoPasteApplications', ['kiro-cli', '', '  ', 'copilot', null, undefined]);
+        mockConfig.setConfig('autoPasteApplications', ['kiro-cli-chat', '', '  ', 'copilot', null, undefined]);
         const apps = configManager.getTargetApplications();
-        assert.deepStrictEqual(apps, ['kiro-cli', 'copilot']);
+        assert.deepStrictEqual(apps, ['kiro-cli-chat', 'copilot']);
     });
 
     test('isAutoPasteEnabled returns true on supported platforms with configured applications', () => {
-        mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
+        mockConfig.setConfig('autoPasteApplications', ['kiro-cli-chat']);
 
         Object.defineProperty(process, 'platform', { value: 'linux' });
         assert.strictEqual(configManager.isAutoPasteEnabled(), true);
@@ -83,7 +83,7 @@ suite('ConfigurationManager Test Suite', () => {
 
     test('isAutoPasteEnabled returns false on unsupported platforms', () => {
         Object.defineProperty(process, 'platform', { value: 'freebsd' });
-        mockConfig.setConfig('autoPasteApplications', ['kiro-cli']);
+        mockConfig.setConfig('autoPasteApplications', ['kiro-cli-chat']);
         assert.strictEqual(configManager.isAutoPasteEnabled(), false);
     });
 

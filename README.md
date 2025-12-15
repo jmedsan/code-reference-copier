@@ -37,7 +37,7 @@ Configure terminal applications for auto-paste functionality:
 **Example configuration:**
 ```json
 {
-  "codeReferenceCopier.autoPasteApplications": ["kiro-cli", "copilot", "edit.exe"]
+  "codeReferenceCopier.autoPasteApplications": ["kiro-cli-chat", "copilot", "edit.exe"]
 }
 ```
 
