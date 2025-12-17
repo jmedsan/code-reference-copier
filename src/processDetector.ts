@@ -20,7 +20,7 @@ export class ProcessDetector {
                 command = `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter 'ParentProcessId=${parentPid}' | ForEach-Object { '{0},{1}' -f $_.ProcessId,$_.Name }"`;
             } else {
                 // Linux/macOS: use ps + pure shell (works on all Unix systems, no dependencies)
-                command = `ps -eo ppid=,pid=,comm= 2>/dev/null | while IFS= read -r l; do set -- $l; [ "$1" = "${parentPid}" ] && echo "$2,$3"; done || true`;
+                command = `ps -eo ppid=,pid=,args= 2>/dev/null | while IFS= read -r l; do set -- $l; [ "$1" = "${parentPid}" ] && echo "$2,$3"; done || true`;
             }
 
             const { stdout } = await execAsync(command);
@@ -51,3 +51,4 @@ export class ProcessDetector {
             .filter((info): info is ProcessInfo => info !== null);
     }
 }
+
