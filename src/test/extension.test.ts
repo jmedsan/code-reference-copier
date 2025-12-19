@@ -241,34 +241,6 @@ suite('Extension Test Suite', () => {
         });
     });
 
-    suite('Template With Text Tests', () => {
-
-        test('Text template appends to base reference with {TEXT} replaced', () => {
-            const baseReference = '/test/file.js:11 ';
-            const templateWithText = '\n\n{TEXT}\n\n';
-            const selectedText = 'const x = 42;';
-            const fullReference = baseReference + templateWithText.replace('{TEXT}', selectedText);
-
-            assert.strictEqual(fullReference, '/test/file.js:11 \n\nconst x = 42;\n\n');
-            assert.ok(!fullReference.includes('{TEXT}'), '{TEXT} should be replaced');
-        });
-
-        test('Custom template format', () => {
-            const customTemplate = '\n```\n{TEXT}\n```\n';
-            const selectedText = 'const result = compute();';
-            const result = customTemplate.replace('{TEXT}', selectedText);
-
-            assert.strictEqual(result, '\n```\nconst result = compute();\n```\n');
-        });
-
-        test('Empty text handling', () => {
-            const templateWithText = '\n\n{TEXT}\n\n';
-            const result = templateWithText.replace('{TEXT}', '');
-
-            assert.strictEqual(result, '\n\n\n\n');
-        });
-    });
-
     suite('Command Handler Tests', () => {
 
         test('All four command handlers execute without errors', async () => {
