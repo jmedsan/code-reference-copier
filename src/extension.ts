@@ -6,6 +6,14 @@ const configManager = new ConfigurationManager();
 const terminalDetector = new TerminalDetector();
 
 export function activate(context: vscode.ExtensionContext) {
+    const sendReferenceToTerminalDisposable = vscode.commands.registerCommand(
+        'code-reference-copier.sendReferenceToTerminal',
+        sendReferenceToTerminalCommand
+    );
+    const sendReferenceWithTextToTerminalDisposable = vscode.commands.registerCommand(
+        'code-reference-copier.sendReferenceWithTextToTerminal',
+        sendReferenceWithTextToTerminalCommand
+    );
     const copyReferenceDisposable = vscode.commands.registerCommand(
         'code-reference-copier.copyReference',
         copyReferenceCommand
@@ -14,20 +22,33 @@ export function activate(context: vscode.ExtensionContext) {
         'code-reference-copier.copyReferenceWithText',
         copyReferenceWithTextCommand
     );
-    context.subscriptions.push(copyReferenceDisposable, copyReferenceWithTextDisposable);
+    context.subscriptions.push(
+        sendReferenceToTerminalDisposable,
+        sendReferenceWithTextToTerminalDisposable,
+        copyReferenceDisposable,
+        copyReferenceWithTextDisposable
+    );
 }
 
 export function deactivate() {}
 
+export async function sendReferenceToTerminalCommand(): Promise<void> {
+    return copyReference(false, false);  // includeText=false, bypassAutoPaste=false
+}
+
+export async function sendReferenceWithTextToTerminalCommand(): Promise<void> {
+    return copyReference(true, false);   // includeText=true, bypassAutoPaste=false
+}
+
 export async function copyReferenceCommand(): Promise<void> {
-    return copyReference(false);
+    return copyReference(false, true);   // includeText=false, bypassAutoPaste=true
 }
 
 export async function copyReferenceWithTextCommand(): Promise<void> {
-    return copyReference(true);
+    return copyReference(true, true);    // includeText=true, bypassAutoPaste=true
 }
 
-async function copyReference(includeText: boolean) {
+async function copyReference(includeText: boolean, bypassAutoPaste: boolean = false) {
     try {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -53,8 +74,7 @@ async function copyReference(includeText: boolean) {
             reference += templateWithText.replace('{TEXT}', selectedText);
         }
 
-        const pasted = await tryAutoPaste(reference);
-        if (!pasted) {
+        if (bypassAutoPaste || !await tryAutoPaste(reference)) {
             await vscode.env.clipboard.writeText(reference);
         }
     } catch (error) {

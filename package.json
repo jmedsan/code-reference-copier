@@ -34,6 +34,8 @@
     "Other"
   ],
   "activationEvents": [
+    "onCommand:code-reference-copier.sendReferenceToTerminal",
+    "onCommand:code-reference-copier.sendReferenceWithTextToTerminal",
     "onCommand:code-reference-copier.copyReference",
     "onCommand:code-reference-copier.copyReferenceWithText"
   ],
@@ -41,25 +43,45 @@
   "contributes": {
     "commands": [
       {
+        "command": "code-reference-copier.sendReferenceToTerminal",
+        "title": "Send Code Reference to Terminal (Auto-paste)"
+      },
+      {
+        "command": "code-reference-copier.sendReferenceWithTextToTerminal",
+        "title": "Send Code Reference with Text to Terminal (Auto-paste)"
+      },
+      {
         "command": "code-reference-copier.copyReference",
-        "title": "Copy Code Reference"
+        "title": "Copy Code Reference to Clipboard Only"
       },
       {
         "command": "code-reference-copier.copyReferenceWithText",
-        "title": "Copy Code Reference with Text"
+        "title": "Copy Code Reference with Text to Clipboard Only"
       }
     ],
     "keybindings": [
       {
-        "command": "code-reference-copier.copyReference",
+        "command": "code-reference-copier.sendReferenceToTerminal",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
         "when": "editorTextFocus"
       },
       {
-        "command": "code-reference-copier.copyReferenceWithText",
+        "command": "code-reference-copier.sendReferenceWithTextToTerminal",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "code-reference-copier.copyReference",
+        "key": "ctrl+shift+alt+k",
+        "mac": "cmd+shift+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "code-reference-copier.copyReferenceWithText",
+        "key": "ctrl+shift+alt+t",
+        "mac": "cmd+shift+alt+t",
         "when": "editorTextFocus"
       }
     ],

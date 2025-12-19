@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { formatReference, copyReferenceCommand, copyReferenceWithTextCommand, convertWindowsToWslPath } from '../extension';
+import { formatReference, copyReferenceCommand, copyReferenceWithTextCommand, sendReferenceToTerminalCommand, sendReferenceWithTextToTerminalCommand, convertWindowsToWslPath } from '../extension';
 
 // Mock VS Code Selection class for testing
 class MockSelection implements vscode.Selection {
@@ -269,15 +269,18 @@ suite('Extension Test Suite', () => {
         });
     });
 
-    suite('Command Wrapper Tests', () => {
+    suite('Command Handler Tests', () => {
 
-        test('Both command wrappers handle no editor gracefully', async () => {
+        test('All four command handlers execute without errors', async () => {
             await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 
+            // Test all command handlers can be called
+            await sendReferenceToTerminalCommand();
+            await sendReferenceWithTextToTerminalCommand();
             await copyReferenceCommand();
             await copyReferenceWithTextCommand();
 
-            assert.ok(true, 'Both commands executed without errors');
+            assert.ok(true, 'All four commands executed without errors');
         });
     });
 });
