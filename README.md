@@ -11,9 +11,11 @@ Copy file references with line ranges using the standard CLI format. Auto-paste 
 - **Auto-paste to terminal applications** (Linux, macOS, Windows)
 - Works with any file type in VS Code
 - Uses absolute paths with OS-appropriate separators
-- Keyboard shortcuts:
-  - `Ctrl+Alt+K` (Linux/Windows) / `Cmd+Alt+K` (Mac) - Copy reference only
-  - `Ctrl+Alt+T` (Linux/Windows) / `Cmd+Alt+T` (Mac) - Copy reference with text
+- Four commands with dedicated keyboard shortcuts:
+  - **Send to Terminal** (auto-paste): `Ctrl+Alt+K` / `Cmd+Alt+K` - Send reference to terminal
+  - **Send with Text to Terminal** (auto-paste): `Ctrl+Alt+T` / `Cmd+Alt+T` - Send reference with selected text to terminal
+  - **Copy to Clipboard**: `Ctrl+Shift+Alt+K` / `Cmd+Shift+Alt+K` - Copy reference only
+  - **Copy with Text to Clipboard**: `Ctrl+Shift+Alt+T` / `Cmd+Shift+Alt+T` - Copy reference with selected text
 
 ## Great for AI CLI Coders
 
@@ -26,9 +28,11 @@ The auto-paste feature is particularly useful when working with AI coding assist
 1. Open any file in VS Code
 2. Optionally select text (single or multiple lines)
 3. Use one of these commands:
-   - **Copy reference only**: `Ctrl+Alt+K` / `Cmd+Alt+K` OR Command Palette → "Copy Code Reference"
-   - **Copy reference with text**: `Ctrl+Alt+T` / `Cmd+Alt+T` OR Command Palette → "Copy Code Reference with Text"
-4. Reference is copied to clipboard or auto-pasted to terminal
+   - **Send to Terminal** (auto-paste): `Ctrl+Alt+K` / `Cmd+Alt+K` OR Command Palette → "Send Code Reference to Terminal"
+   - **Send with Text to Terminal** (auto-paste): `Ctrl+Alt+T` / `Cmd+Alt+T` OR Command Palette → "Send Code Reference with Text to Terminal"
+   - **Copy to Clipboard**: `Ctrl+Shift+Alt+K` / `Cmd+Shift+Alt+K` OR Command Palette → "Copy Code Reference to Clipboard Only"
+   - **Copy with Text to Clipboard**: `Ctrl+Shift+Alt+T` / `Cmd+Shift+Alt+T` OR Command Palette → "Copy Code Reference with Text to Clipboard Only"
+4. Reference is either auto-pasted to the terminal or copied to clipboard, depending on the command
 
 ### Auto-Paste Configuration
 
