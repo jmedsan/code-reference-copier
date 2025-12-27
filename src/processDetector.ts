@@ -5,7 +5,7 @@ const execAsync = promisify(exec);
 
 export interface ProcessInfo {
     pid: number;
-    name: string;
+    commandLine: string;
 }
 
 export class ProcessDetector {
@@ -19,8 +19,9 @@ export class ProcessDetector {
                 // PowerShell is available on all modern Windows (5.1+ built-in since Win10)
                 command = `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter 'ParentProcessId=${parentPid}' | ForEach-Object { '{0},{1}' -f $_.ProcessId,$_.Name }"`;
             } else {
-                // Linux/macOS: use ps + pure shell (works on all Unix systems, no dependencies)
-                command = `ps -eo ppid=,pid=,args= 2>/dev/null | while IFS= read -r l; do set -- $l; [ "$1" = "${parentPid}" ] && echo "$2,$3"; done || true`;
+                // Linux/macOS: use ps + pure shell to capture full command line (works on all Unix systems, no dependencies)
+                // Save pid, shift to remove ppid/pid, then output "pid,full_command_line" format
+                command = `ps -eo ppid=,pid=,args= 2>/dev/null | while IFS= read -r l; do set -- $l; if [ "$1" = "${parentPid}" ]; then pid=$2; shift 2; echo "$pid,$*"; fi; done || true`;
             }
 
             const { stdout } = await execAsync(command);
@@ -32,7 +33,7 @@ export class ProcessDetector {
     }
 
     private parseOutput(stdout: string): ProcessInfo[] {
-        // Parse comma-separated "pid,name" format from both platforms
+        // Parse comma-separated "pid,commandLine" format from both platforms
         return stdout
             .trim()
             .split('\n')
@@ -41,9 +42,9 @@ export class ProcessDetector {
                 const parts = line.trim().split(',');
                 if (parts.length >= 2) {
                     const pid = parseInt(parts[0], 10);
-                    const name = parts.slice(1).join(','); // Handle names with commas
+                    const commandLine = parts.slice(1).join(','); // Handle command lines with commas
                     if (!isNaN(pid)) {
-                        return { pid, name };
+                        return { pid, commandLine };
                     }
                 }
                 return null;

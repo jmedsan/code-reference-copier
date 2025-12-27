@@ -36,7 +36,10 @@ export class TerminalDetector {
         for (const process of childProcesses) {
             // Check if this process matches any target app
             for (const targetApp of targetApps) {
-                if (process.name === targetApp) {
+                // Match targetApp as complete word in command line using word boundary
+                // \b ensures word start, (?:\s|$) ensures word end (space or end of string)
+                const pattern = new RegExp(`\\b${targetApp}(?:\\s|$)`);
+                if (pattern.test(process.commandLine)) {
                     return true;
                 }
             }

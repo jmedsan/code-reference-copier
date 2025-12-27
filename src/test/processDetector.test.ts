@@ -1,51 +1,22 @@
 import * as assert from 'assert';
 import { ProcessDetector, ProcessInfo } from '../processDetector';
 
-// Mock the exec function by creating a testable ProcessDetector
+// Testable ProcessDetector that can be tested without running actual shell commands
 class TestableProcessDetector extends ProcessDetector {
-    private mockExecResult: { error: Error | null; stdout: string; stderr: string } | null = null;
-    private mockPlatform: string = 'linux';
-
-    setMockExecResult(error: Error | null, stdout: string, stderr: string = '') {
-        this.mockExecResult = { error, stdout, stderr };
-    }
-
-    setMockPlatform(platform: string) {
-        this.mockPlatform = platform;
-    }
-
-    async getChildProcesses(parentPid: number): Promise<ProcessInfo[]> {
-        if (!this.mockExecResult) {
-            throw new Error('Mock result not set');
-        }
-
-        if (this.mockExecResult.error) {
-            console.error(`Failed to get child processes for PID ${parentPid}:`, this.mockExecResult.error);
+    // Test method that accepts mock data directly
+    async testGetChildProcesses(parentPid: number, mockData: string | Error): Promise<ProcessInfo[]> {
+        if (mockData instanceof Error) {
+            console.error(`Failed to get child processes for PID ${parentPid}:`, mockData);
             return [];
         }
 
-        const stdout = this.mockExecResult.stdout;
-        return this.parseOutputForTest(stdout);
-    }
-
-    private parseOutputForTest(stdout: string): ProcessInfo[] {
-        // Parse comma-separated "pid,name" format from both platforms
-        return stdout
-            .trim()
-            .split('\n')
-            .filter(line => line.trim().length > 0)
-            .map(line => {
-                const parts = line.trim().split(',');
-                if (parts.length >= 2) {
-                    const pid = parseInt(parts[0], 10);
-                    const name = parts.slice(1).join(',');
-                    if (!isNaN(pid)) {
-                        return { pid, name };
-                    }
-                }
-                return null;
-            })
-            .filter((info): info is ProcessInfo => info !== null);
+        try {
+            // Simulate the actual flow: execute command (mocked) -> parse output
+            return (this as any).parseOutput(mockData);
+        } catch (error) {
+            console.error(`Failed to get child processes for PID ${parentPid}:`, error);
+            return [];
+        }
     }
 }
 
@@ -57,83 +28,77 @@ suite('ProcessDetector Test Suite', () => {
     });
 
     test('getChildProcesses returns process info from ps output', async () => {
-        processDetector.setMockExecResult(null, '1001,kiro-cli\n1002,copilot\n1003,bash\n');
-
-        const result = await processDetector.getChildProcesses(1234);
+        const result = await processDetector.testGetChildProcesses(1234, '1001,kiro-cli\n1002,copilot\n1003,bash\n');
         assert.deepStrictEqual(result, [
-            { pid: 1001, name: 'kiro-cli' },
-            { pid: 1002, name: 'copilot' },
-            { pid: 1003, name: 'bash' }
+            { pid: 1001, commandLine: 'kiro-cli' },
+            { pid: 1002, commandLine: 'copilot' },
+            { pid: 1003, commandLine: 'bash' }
         ]);
     });
 
     test('getChildProcesses filters empty lines', async () => {
-        processDetector.setMockExecResult(null, '1001,kiro-cli\n\n1002,copilot\n  \n');
-
-        const result = await processDetector.getChildProcesses(5678);
+        const result = await processDetector.testGetChildProcesses(5678, '1001,kiro-cli\n\n1002,copilot\n  \n');
         assert.deepStrictEqual(result, [
-            { pid: 1001, name: 'kiro-cli' },
-            { pid: 1002, name: 'copilot' }
+            { pid: 1001, commandLine: 'kiro-cli' },
+            { pid: 1002, commandLine: 'copilot' }
         ]);
     });
 
     test('getChildProcesses returns empty array on ps command failure', async () => {
-        processDetector.setMockExecResult(new Error('ps command failed'), '', 'No such process');
-
-        const result = await processDetector.getChildProcesses(9999);
+        const result = await processDetector.testGetChildProcesses(9999, new Error('ps command failed'));
         assert.deepStrictEqual(result, []);
     });
 
     test('getChildProcesses handles empty ps output', async () => {
-        processDetector.setMockExecResult(null, '');
-
-        const result = await processDetector.getChildProcesses(1111);
+        const result = await processDetector.testGetChildProcesses(1111, '');
         assert.deepStrictEqual(result, []);
     });
 
     test('Property-based test: process info parsing - 100 iterations', async () => {
+        const commandLines = [
+            'kiro-cli',
+            'copilot',
+            'bash',
+            'zsh',
+            'node',
+            'python3',
+            'node /home/user/.npm-global/bin/qwen',
+            'node -e "console.log(\'hi\')"',
+            'python3 -m http.server 8000',
+            '/usr/bin/node --inspect script.js'
+        ];
+
         for (let i = 0; i < 100; i++) {
             const pid = Math.floor(Math.random() * 10000);
-            const processNames = ['kiro-cli', 'copilot', 'bash', 'zsh', 'node', 'python3'];
-            const selectedNames = processNames.slice(0, Math.floor(Math.random() * processNames.length) + 1);
-            const psOutput = selectedNames.map((name, idx) => `${2000 + idx},${name}`).join('\n') + '\n';
-            const expected = selectedNames.map((name, idx) => ({ pid: 2000 + idx, name }));
+            const selectedCommands = commandLines.slice(0, Math.floor(Math.random() * commandLines.length) + 1);
+            const psOutput = selectedCommands.map((cmd, idx) => `${2000 + idx},${cmd}`).join('\n') + '\n';
+            const expected = selectedCommands.map((cmd, idx) => ({ pid: 2000 + idx, commandLine: cmd }));
 
-            processDetector.setMockExecResult(null, psOutput);
-            const result = await processDetector.getChildProcesses(pid);
+            const result = await processDetector.testGetChildProcesses(pid, psOutput);
             assert.deepStrictEqual(result, expected, `Failed for PID ${pid} with output: ${psOutput}`);
         }
     });
 
     test('getChildProcesses parses Windows PowerShell output correctly', async () => {
-        processDetector.setMockPlatform('win32');
-        processDetector.setMockExecResult(null, '2001,claude.exe\n2002,cmd.exe\n2003,node.exe\n');
-
-        const result = await processDetector.getChildProcesses(1234);
+        const result = await processDetector.testGetChildProcesses(1234, '2001,claude.exe\n2002,cmd.exe\n2003,node.exe\n');
         assert.deepStrictEqual(result, [
-            { pid: 2001, name: 'claude.exe' },
-            { pid: 2002, name: 'cmd.exe' },
-            { pid: 2003, name: 'node.exe' }
+            { pid: 2001, commandLine: 'claude.exe' },
+            { pid: 2002, commandLine: 'cmd.exe' },
+            { pid: 2003, commandLine: 'node.exe' }
         ]);
     });
 
     test('getChildProcesses handles empty Windows PowerShell output', async () => {
-        processDetector.setMockPlatform('win32');
-        processDetector.setMockExecResult(null, '');
-
-        const result = await processDetector.getChildProcesses(1234);
+        const result = await processDetector.testGetChildProcesses(1234, '');
         assert.deepStrictEqual(result, []);
     });
 
     test('getChildProcesses parses macOS ps output correctly', async () => {
-        processDetector.setMockPlatform('darwin');
-        processDetector.setMockExecResult(null, '3001,claude\n3002,zsh\n3003,node\n');
-
-        const result = await processDetector.getChildProcesses(1234);
+        const result = await processDetector.testGetChildProcesses(1234, '3001,claude\n3002,zsh\n3003,node\n');
         assert.deepStrictEqual(result, [
-            { pid: 3001, name: 'claude' },
-            { pid: 3002, name: 'zsh' },
-            { pid: 3003, name: 'node' }
+            { pid: 3001, commandLine: 'claude' },
+            { pid: 3002, commandLine: 'zsh' },
+            { pid: 3003, commandLine: 'node' }
         ]);
     });
 
@@ -153,13 +118,13 @@ suite('ProcessDetector Test Suite', () => {
             // Should return an array (might be empty or have processes)
             assert.ok(Array.isArray(result));
 
-            // All elements should be ProcessInfo objects with pid and name
+            // All elements should be ProcessInfo objects with pid and commandLine
             result.forEach(processInfo => {
                 assert.ok(typeof processInfo === 'object');
                 assert.ok(typeof processInfo.pid === 'number');
                 assert.ok(processInfo.pid > 0);
-                assert.ok(typeof processInfo.name === 'string');
-                assert.ok(processInfo.name.trim().length > 0);
+                assert.ok(typeof processInfo.commandLine === 'string');
+                assert.ok(processInfo.commandLine.trim().length > 0);
             });
         });
 
