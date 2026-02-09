@@ -2,7 +2,7 @@
   "name": "code-reference-copier",
   "displayName": "Code Reference Copier",
   "description": "Copy file references with line ranges in standard CLI format. Auto-paste to terminal applications on Linux, macOS, and Windows. Perfect for AI CLI coders like Claude, Kiro, and Copilot.",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "publisher": "jmedsan",
   "keywords": [
     "code",
@@ -93,7 +93,11 @@
           "items": {
             "type": "string"
           },
-          "default": ["copilot", "kiro-cli", "kiro-cli-chat"],
+          "default": [
+            "copilot",
+            "kiro-cli",
+            "kiro-cli-chat"
+          ],
           "description": "List of terminal applications to auto-paste code references to (Linux, macOS, Windows). Examples: [\"claude\", \"kiro-cli\", \"copilot\", \"edit.exe\"]"
         },
         "codeReferenceCopier.templatePath": {
