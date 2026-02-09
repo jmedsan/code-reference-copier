@@ -93,7 +93,7 @@
           "items": {
             "type": "string"
           },
-          "default": [],
+          "default": ["copilot", "kiro-cli", "kiro-cli-chat"],
           "description": "List of terminal applications to auto-paste code references to (Linux, macOS, Windows). Examples: [\"claude\", \"kiro-cli\", \"copilot\", \"edit.exe\"]"
         },
         "codeReferenceCopier.templatePath": {
