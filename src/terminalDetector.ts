@@ -16,6 +16,14 @@ export class TerminalDetector {
         for (const terminal of terminals) {
             const processId = await terminal.processId;
             if (processId) {
+                // Custom terminal profiles (e.g. `path: "claude"`) launch the target
+                // app directly as the terminal process, so check its own command line
+                // before recursing into children.
+                const selfCmd = await this.processDetector.getProcessCommandLine(processId);
+                if (selfCmd && this.matchesAny(selfCmd, targetApps)) {
+                    return terminal;
+                }
+
                 const found = await this.searchProcessTree(processId, targetApps, 1);
                 if (found) {
                     return terminal;
@@ -26,6 +34,16 @@ export class TerminalDetector {
         return null;
     }
 
+    private matchesAny(commandLine: string, targetApps: string[]): boolean {
+        for (const targetApp of targetApps) {
+            const pattern = new RegExp(`\\b${targetApp}(?:\\s|$)`);
+            if (pattern.test(commandLine)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private async searchProcessTree(pid: number, targetApps: string[], currentDepth: number): Promise<boolean> {
         if (currentDepth > MAX_DEPTH) {
             return false;
@@ -34,14 +52,8 @@ export class TerminalDetector {
         const childProcesses = await this.processDetector.getChildProcesses(pid);
 
         for (const process of childProcesses) {
-            // Check if this process matches any target app
-            for (const targetApp of targetApps) {
-                // Match targetApp as complete word in command line using word boundary
-                // \b ensures word start, (?:\s|$) ensures word end (space or end of string)
-                const pattern = new RegExp(`\\b${targetApp}(?:\\s|$)`);
-                if (pattern.test(process.commandLine)) {
-                    return true;
-                }
+            if (this.matchesAny(process.commandLine, targetApps)) {
+                return true;
             }
         }
 

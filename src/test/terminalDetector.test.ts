@@ -41,13 +41,22 @@ class MockTerminal implements vscode.Terminal {
 // Mock ProcessDetector
 class MockProcessDetector extends ProcessDetector {
     private mockResults: Map<number, ProcessInfo[]> = new Map();
+    private mockSelf: Map<number, string> = new Map();
 
     setMockResult(pid: number, processes: Array<{ pid: number; commandLine: string }>) {
         this.mockResults.set(pid, processes);
     }
 
+    setMockSelf(pid: number, commandLine: string) {
+        this.mockSelf.set(pid, commandLine);
+    }
+
     async getChildProcesses(parentPid: number): Promise<ProcessInfo[]> {
         return this.mockResults.get(parentPid) || [];
+    }
+
+    async getProcessCommandLine(pid: number): Promise<string | null> {
+        return this.mockSelf.get(pid) || null;
     }
 }
 
@@ -260,6 +269,19 @@ suite('TerminalDetector Test Suite', () => {
 
         const result = await terminalDetector.findMatchingTerminal(['kiro-cli']);
         assert.strictEqual(result, null);
+    });
+
+    test('findMatchingTerminal matches when terminal process itself is the target app (custom profile, no children)', async () => {
+        // Repro: VSCode terminal profile launches `claude` directly as the shell process.
+        // terminal.processId IS the claude pid; it has no relevant children.
+        const mockTerminal = new MockTerminal('terminal1', 13202);
+        Object.defineProperty(vscode.window, 'terminals', { value: [mockTerminal] });
+
+        mockProcessDetector.setMockSelf(13202, '/home/javi/.local/bin/claude --dangerously-skip-permissions');
+        mockProcessDetector.setMockResult(13202, []);
+
+        const result = await terminalDetector.findMatchingTerminal(['claude']);
+        assert.strictEqual(result, mockTerminal);
     });
 
     test('findMatchingTerminal searches multiple children at each level and matches command lines', async () => {

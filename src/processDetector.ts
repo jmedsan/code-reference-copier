@@ -9,6 +9,19 @@ export interface ProcessInfo {
 }
 
 export class ProcessDetector {
+    async getProcessCommandLine(pid: number): Promise<string | null> {
+        try {
+            const command = process.platform === 'win32'
+                ? `powershell -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}').Name"`
+                : `ps -p ${pid} -o args= 2>/dev/null`;
+            const { stdout } = await execAsync(command);
+            const line = stdout.trim();
+            return line.length > 0 ? line : null;
+        } catch {
+            return null;
+        }
+    }
+
     async getChildProcesses(parentPid: number): Promise<ProcessInfo[]> {
         try {
             const platform = process.platform;
